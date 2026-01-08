@@ -25,7 +25,6 @@
                             <tr class="table-active">
                                 <th>예정 시간 (Time)</th>
                                 <th>장애 유형 (Error Type)</th>
-                                <th>순번 (Seq)</th>
                                 <th>24h 확률 (Prob.)</th>
                                 <th>위험도 (Risk)</th>
                                 <th style="width: 151px;">남은 시간 (Countdown)</th>
@@ -126,7 +125,6 @@
             tr.innerHTML = `
                 <td><b>${item.next_est}</b></td>
                 <td><span class="badge bg-secondary">${item.type}</span></td>
-                <td><small class="text-secondary">#${item.occurrence_index}</small></td>
                 <td class="text-info">${item.prob_24h}</td>
                 <td class="${item.risk_color}">${item.risk}</td>
                 <td class="bg-dark text-center fw-bold text-warning font-monospace">${countdownText}</td>
