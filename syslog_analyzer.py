@@ -8,6 +8,7 @@ import json
 
 SYSLOG_DIR = os.environ.get("SYSLOG_DIR", "syslog1년치")
 STATS_FILE = "stats.json"
+SAMPLES_FILE = "training_samples.json"
 
 class SyslogAnalyzer:
     def __init__(self, root_dir=SYSLOG_DIR):
@@ -110,10 +111,18 @@ class SyslogAnalyzer:
         print(f"Top 5 Error Types: {self.top_5_types}")
         return self.top_5_types
 
-    def get_training_data(self, target_months=['07']):
+    def get_training_data(self, target_months=['05','06','07','08','09','10','11']):
+        # Check if pre-extracted samples exist (for Cloud deployment)
+        if os.path.exists(SAMPLES_FILE):
+            print(f"Using pre-extracted training samples from {SAMPLES_FILE}...")
+            try:
+                with open(SAMPLES_FILE, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except Exception as e:
+                print(f"Error reading {SAMPLES_FILE}: {e}")
+
         self.july_messages = [] # Reset/Reuse variable (naming legacy but logic updated)
-        
-        print(f"Loading training data for months: {target_months}...")
+        print(f"Loading training data from raw files for months: {target_months}...")
         
         for m_str in target_months:
             month_path = os.path.join(self.root_dir, m_str)
