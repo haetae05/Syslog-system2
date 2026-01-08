@@ -169,7 +169,7 @@ def api_forecast():
     forecast_timeline = []
     
     horizon_days = 30 # Look ahead 1 month
-    max_events_per_type = 20 # Longer timeline as items expire
+    max_events_per_type = 40 # Total pool of future events
     
     for error_type, count in target_types:
         if count <= 0: continue
