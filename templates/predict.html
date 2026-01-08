@@ -46,6 +46,7 @@
 </div>
 
 <script>
+    const MAX_VISIBLE = 15;
     let countdownInterval = null;
     let forecastData = [];
 
@@ -68,8 +69,7 @@
                     forecastData = data.data;
                     resultArea.classList.remove('d-none');
                     liveStatus.classList.remove('d-none');
-                    renderTable();
-                    startCountdown();
+                    startLiveEngine();
                 }
             })
             .catch(err => {
@@ -79,59 +79,61 @@
             });
     });
 
-    function renderTable() {
+    function startLiveEngine() {
+        if (countdownInterval) clearInterval(countdownInterval);
+
+        countdownInterval = setInterval(() => {
+            const now = new Date().getTime();
+
+            // 1. Filter out already expired items to find the "active" pool
+            const activePool = forecastData.filter(item => {
+                const target = new Date(item.timestamp_iso).getTime();
+                return (target - now) > -1000; // Keep until 1s after expiry for smoothness
+            });
+
+            // 2. Slice the top N items to display
+            const visibleItems = activePool.slice(0, MAX_VISIBLE);
+
+            renderDynamicTable(visibleItems, now);
+        }, 1000);
+    }
+
+    function renderDynamicTable(items, now) {
         const tableBody = document.getElementById('forecastTableBody');
+
+        // We recreate or update rows to maintain the count
+        // For performance and to prevent flickering, we can just rebuild if count changed or top item changed
         tableBody.innerHTML = "";
 
-        forecastData.forEach((item, index) => {
+        items.forEach((item, index) => {
+            const target = new Date(item.timestamp_iso).getTime();
+            const distance = target - now;
+
+            let countdownText = "";
+            if (distance < 0) {
+                countdownText = "OCCURRING...";
+            } else {
+                const h = Math.floor(distance / (1000 * 60 * 60));
+                const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((distance % (1000 * 60)) / 1000);
+                countdownText = String(h).padStart(2, '0') + "h " +
+                    String(m).padStart(2, '0') + "m " +
+                    String(s).padStart(2, '0') + "s";
+            }
+
             const tr = document.createElement('tr');
-            tr.id = `row-${index}`;
+            tr.className = distance < 300000 ? "table-danger ripple" : ""; // Highlight items within 5 mins
             tr.innerHTML = `
                 <td><b>${item.next_est}</b></td>
                 <td><span class="badge bg-secondary">${item.type}</span></td>
                 <td><small class="text-secondary">#${item.occurrence_index}</small></td>
                 <td class="text-info">${item.prob_24h}</td>
                 <td class="${item.risk_color}">${item.risk}</td>
-                <td id="countdown-${index}" class="bg-dark text-center fw-bold text-warning font-monospace">--:--:--</td>
+                <td class="bg-dark text-center fw-bold text-warning font-monospace">${countdownText}</td>
                 <td><small class="text-secondary">${item.mtbf}</small></td>
             `;
             tableBody.appendChild(tr);
         });
-    }
-
-    function startCountdown() {
-        if (countdownInterval) clearInterval(countdownInterval);
-
-        countdownInterval = setInterval(() => {
-            const now = new Date().getTime();
-            let anyRemoved = false;
-
-            forecastData.forEach((item, index) => {
-                const target = new Date(item.timestamp_iso).getTime();
-                const distance = target - now;
-                const element = document.getElementById(`countdown-${index}`);
-
-                if (distance < 0) {
-                    if (element) {
-                        // Hide row when expired
-                        const row = document.getElementById(`row-${index}`);
-                        if (row) row.style.display = 'none';
-                    }
-                    // Optionally remove or mark as occurred
-                } else {
-                    const h = Math.floor(distance / (1000 * 60 * 60));
-                    const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                    const s = Math.floor((distance % (1000 * 60)) / 1000);
-
-                    if (element) {
-                        element.innerText =
-                            String(h).padStart(2, '0') + "h " +
-                            String(m).padStart(2, '0') + "m " +
-                            String(s).padStart(2, '0') + "s";
-                    }
-                }
-            });
-        }, 1000);
     }
 </script>
 {% endblock %}
