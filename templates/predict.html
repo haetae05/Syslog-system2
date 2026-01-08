@@ -113,9 +113,9 @@
 
                 if (distance < 0) {
                     if (element) {
-                        element.innerText = "EXPIRED";
-                        element.classList.remove('text-warning');
-                        element.classList.add('text-danger');
+                        // Hide row when expired
+                        const row = document.getElementById(`row-${index}`);
+                        if (row) row.style.display = 'none';
                     }
                     // Optionally remove or mark as occurred
                 } else {
